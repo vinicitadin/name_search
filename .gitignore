@@ -1,0 +1,9 @@
+# Eclipse
+/bin/
+/target/
+/.settings/
+.classpath
+.project
+
+*.log
+*.tmp__pycache__
