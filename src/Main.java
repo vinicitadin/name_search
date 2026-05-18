@@ -42,7 +42,7 @@ public class Main {
         sequentialTimer.start();
 
         SequentialSearch sequentialSearch = new SequentialSearch(directoryPath);
-        List<Result> sequentialResults = sequentialSearch.search(searchTerm, sequentialType, true);
+        List<Result> sequentialResults = sequentialSearch.search(searchTerm, sequentialType);
 
         sequentialTimer.stop();
 
@@ -84,15 +84,15 @@ public class Main {
         switch (strategyChoice) {
             case 1:
                 System.out.println("\nUsando estratégia: Uma thread por arquivo");
-                parallelResults = parallelSearch.searchOneThreadPerFile(searchTerm, parallelType, true);
+                parallelResults = parallelSearch.searchOneThreadPerFile(searchTerm, parallelType);
                 break;
             case 2:
                 System.out.println("\nUsando estratégia: Pool fixo de " + numThreads + " threads");
-                parallelResults = parallelSearch.searchFixedThreadPool(searchTerm, parallelType, true);
+                parallelResults = parallelSearch.searchFixedThreadPool(searchTerm, parallelType);
                 break;
             case 3:
                 System.out.println("\nUsando estratégia: Threads com chunks");
-                parallelResults = parallelSearch.searchChunked(searchTerm, parallelType, true);
+                parallelResults = parallelSearch.searchChunked(searchTerm, parallelType);
                 break;
             default:
                 System.out.println("\nOpção inválida. Usando estratégia padrão.");

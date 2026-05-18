@@ -22,10 +22,10 @@ public class SequentialSearch {
     }
 
 
-    public List<Result> search(String searchTerm, sequential.LineSearch.SearchType sequentialType, boolean recursive) {
+    public List<Result> search(String searchTerm, sequential.LineSearch.SearchType sequentialType) {
         List<Result> allResults = new ArrayList<>();
 
-        List<File> txtFiles = recursive ? fileSearch.findAllTxtFilesRecursive() : fileSearch.findAllTxtFiles();
+        List<File> txtFiles = fileSearch.findAllTxtFilesRecursive();
 
         if (txtFiles.isEmpty()) {
             System.out.println("Nenhum arquivo .txt encontrado no diretório: " + directoryPath);
@@ -59,6 +59,6 @@ public class SequentialSearch {
     }
 
     public List<Result> search(String searchTerm) {
-        return search(searchTerm, sequential.LineSearch.SearchType.SIMPLE, false);
+        return search(searchTerm, sequential.LineSearch.SearchType.SIMPLE);
     }
 }

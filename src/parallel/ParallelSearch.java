@@ -22,10 +22,10 @@ public class ParallelSearch {
     }
 
 
-    public List<Result> searchOneThreadPerFile(String searchTerm, ParallelLineSearch.SearchType type, boolean recursive) {
+    public List<Result> searchOneThreadPerFile(String searchTerm, ParallelLineSearch.SearchType type) {
         List<Result> allResults = new ArrayList<>();
 
-        List<File> txtFiles = recursive ? fileSearch.findAllTxtFilesRecursive() : fileSearch.findAllTxtFiles();
+        List<File> txtFiles = fileSearch.findAllTxtFilesRecursive();
 
         if (txtFiles.isEmpty()) {
             System.out.println("Nenhum arquivo .txt encontrado no diretório: " + directoryPath);
@@ -53,10 +53,10 @@ public class ParallelSearch {
         return allResults;
     }
 
-    public List<Result> searchFixedThreadPool(String searchTerm, ParallelLineSearch.SearchType type, boolean recursive) {
+    public List<Result> searchFixedThreadPool(String searchTerm, ParallelLineSearch.SearchType type) {
         List<Result> allResults = new ArrayList<>();
 
-        List<File> txtFiles = recursive ? fileSearch.findAllTxtFilesRecursive() : fileSearch.findAllTxtFiles();
+        List<File> txtFiles = fileSearch.findAllTxtFilesRecursive();
 
         if (txtFiles.isEmpty()) {
             System.out.println("Nenhum arquivo .txt encontrado no diretório: " + directoryPath);
@@ -98,10 +98,10 @@ public class ParallelSearch {
         return allResults;
     }
 
-    public List<Result> searchChunked(String searchTerm, ParallelLineSearch.SearchType type, boolean recursive) {
+    public List<Result> searchChunked(String searchTerm, ParallelLineSearch.SearchType type) {
         List<Result> allResults = new ArrayList<>();
 
-        List<File> txtFiles = recursive ? fileSearch.findAllTxtFilesRecursive() : fileSearch.findAllTxtFiles();
+        List<File> txtFiles = fileSearch.findAllTxtFilesRecursive();
 
         if (txtFiles.isEmpty()) {
             System.out.println("Nenhum arquivo .txt encontrado no diretório: " + directoryPath);
@@ -132,7 +132,7 @@ public class ParallelSearch {
     }
 
     public List<Result> search(String searchTerm) {
-        return searchOneThreadPerFile(searchTerm, ParallelLineSearch.SearchType.SIMPLE, false);
+        return searchOneThreadPerFile(searchTerm, ParallelLineSearch.SearchType.SIMPLE);
     }
 
     private List<List<File>> divideIntoChunks(List<File> files, int numChunks) {
