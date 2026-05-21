@@ -1,10 +1,7 @@
 import parallel.ParallelSearch;
-import parallel.ParallelLineSearch;
-import sequential.LineSearch;
 import sequential.SequentialSearch;
 import util.Timer;
 import model.Result;
-import java.util.List;
 import java.util.Scanner;
 
 public class Main {
@@ -17,22 +14,17 @@ public class Main {
         System.out.println("    Sequencial vs Paralelo");
         System.out.println("====================================================\n");
 
-        String directoryPath = "C:\\Users\\lab202a\\eclipse-workspace\\name_search-main\\datasets";
+        String directoryPath = "C:\\Users\\User\\Documents\\nameSearch\\name_search\\datasets";
         
-        System.out.print("Digite o nome a buscar: ");
+        System.out.print("Digite o nome e sobrenome a buscar (separados por espaço): ");
         String searchTerm = scanner.nextLine().trim();
 
-
-        System.out.println("\nEscolha o tipo de busca:");
-        System.out.println("1 - Simples (contains)");
-        System.out.println("2 - Case-insensitive");
-        System.out.println("3 - Regex");
-        System.out.println("4 - Palavra completa");
-        System.out.print("Opção: ");
-
-        int searchTypeChoice = Integer.parseInt(scanner.nextLine().trim());
-        LineSearch.SearchType sequentialType = getSequentialSearchType(searchTypeChoice);
-        ParallelLineSearch.SearchType parallelType = getParallelSearchType(searchTypeChoice);
+        // Validar se contém nome e sobrenome
+        if (!isValidFullName(searchTerm)) {
+            System.out.println("Erro: Você deve fornecer um nome E um sobrenome (separados por espaço).");
+            scanner.close();
+            return;
+        }
 
         System.out.println("\n====================================================");
         System.out.println("    TESTE 1: BUSCA SEQUENCIAL (SEM PARALELISMO)");
@@ -42,19 +34,13 @@ public class Main {
         sequentialTimer.start();
 
         SequentialSearch sequentialSearch = new SequentialSearch(directoryPath);
-        List<Result> sequentialResults = sequentialSearch.search(searchTerm, sequentialType);
+        Result sequentialResult = sequentialSearch.searchFirstOccurrence(searchTerm);
 
         sequentialTimer.stop();
 
-        System.out.println("Resultados encontrados: " + sequentialResults.size());
-        if (!sequentialResults.isEmpty()) {
-            System.out.println("\nPrimeiros 10 resultados:");
-            for (int i = 0; i < Math.min(10, sequentialResults.size()); i++) {
-                System.out.println((i + 1) + ". " + sequentialResults.get(i));
-            }
-            if (sequentialResults.size() > 10) {
-                System.out.println("... e mais " + (sequentialResults.size() - 10) + " resultados");
-            }
+        if (sequentialResult != null) {
+            System.out.println("Resultado encontrado:");
+            System.out.println(sequentialResult);
         } else {
             System.out.println("Nenhum resultado encontrado.");
         }
@@ -79,91 +65,59 @@ public class Main {
         parallelTimer.start();
 
         ParallelSearch parallelSearch = new ParallelSearch(directoryPath, numThreads);
-        List<Result> parallelResults = null;
+        Result parallelResult = null;
 
         switch (strategyChoice) {
             case 1:
                 System.out.println("\nUsando estratégia: Uma thread por arquivo");
-                parallelResults = parallelSearch.searchOneThreadPerFile(searchTerm, parallelType);
+                parallelResult = parallelSearch.searchFirstOccurrenceOneThreadPerFile(searchTerm);
                 break;
             case 2:
-                System.out.println("\nUsando estratégia: Pool fixo de " + numThreads + " threads");
-                parallelResults = parallelSearch.searchFixedThreadPool(searchTerm, parallelType);
+                System.out.println("\nUsando estratégia: Pool fixo de threads");
+                parallelResult = parallelSearch.searchFirstOccurrenceFixedThreadPool(searchTerm);
                 break;
             case 3:
                 System.out.println("\nUsando estratégia: Threads com chunks");
-                parallelResults = parallelSearch.searchChunked(searchTerm, parallelType);
+                parallelResult = parallelSearch.searchFirstOccurrenceChunked(searchTerm);
                 break;
             default:
-                System.out.println("\nOpção inválida. Usando estratégia padrão.");
-                parallelResults = parallelSearch.search(searchTerm);
+                System.out.println("Opção inválida!");
+                scanner.close();
+                return;
         }
 
         parallelTimer.stop();
 
-        System.out.println("\nResultados encontrados: " + parallelResults.size());
-        if (!parallelResults.isEmpty()) {
-            System.out.println("\nPrimeiros 10 resultados:");
-            for (int i = 0; i < Math.min(10, parallelResults.size()); i++) {
-                System.out.println((i + 1) + ". " + parallelResults.get(i));
-            }
-            if (parallelResults.size() > 10) {
-                System.out.println("... e mais " + (parallelResults.size() - 10) + " resultados");
-            }
+        if (parallelResult != null) {
+            System.out.println("Resultado encontrado:");
+            System.out.println(parallelResult);
         } else {
             System.out.println("Nenhum resultado encontrado.");
         }
 
         System.out.println("\nTempo de execução: " + parallelTimer);
 
-        System.out.println("\n====================================================");
-        System.out.println("    ANÁLISE DE PERFORMANCE");
-        System.out.println("====================================================\n");
-
-        long sequentialTime = sequentialTimer.getElapsedTime();
-        long parallelTime = parallelTimer.getElapsedTime();
-        double speedUp = Timer.calculateSpeedUp(sequentialTime, parallelTime);
-
-        System.out.printf("Tempo Sequencial:  %.2f ms\n", (double) sequentialTime);
-        System.out.printf("Tempo Paralelo:    %.2f ms\n", (double) parallelTime);
-        System.out.printf("Speed Up:          %.2f x\n", speedUp);
-
-        if (speedUp > 1.0) {
-            System.out.printf("Ganho de Performance: %.1f%%\n", (speedUp - 1) * 100);
-        } else if (speedUp < 1.0) {
-            System.out.printf("Perda de Performance: %.1f%%\n", (1 - speedUp) * 100);
+        // Comparação de performance
+        if (sequentialResult != null && parallelResult != null) {
+        	double sequentialTime = sequentialTimer.getElapsedTime();
+        	double parallelTime = parallelTimer.getElapsedTime();
+            double speedUp = Timer.calculateSpeedUp(
+                sequentialTimer.getElapsedTime(),
+                parallelTimer.getElapsedTime()
+            );
+            System.out.println("\n====================================================");
+            System.out.println("    ANÁLISE DE PERFORMANCE");
+            System.out.println("====================================================");
+            System.out.printf("Tempo Sequencial: " + String.format("%.2f", sequentialTime) + "ms\n");
+            System.out.printf("Tempo Paralelo: " + String.format("%.2f", parallelTime) + "ms\n");
+            System.out.println("Speed Up: " + String.format("%.2f", speedUp) + "x");
         }
 
         scanner.close();
     }
 
-    private static sequential.LineSearch.SearchType getSequentialSearchType(int choice) {
-        switch (choice) {
-            case 1:
-                return sequential.LineSearch.SearchType.SIMPLE;
-            case 2:
-                return sequential.LineSearch.SearchType.CASE_INSENSITIVE;
-            case 3:
-                return sequential.LineSearch.SearchType.REGEX;
-            case 4:
-                return sequential.LineSearch.SearchType.WHOLE_WORD;
-            default:
-                return sequential.LineSearch.SearchType.SIMPLE;
-        }
-    }
-
-    private static ParallelLineSearch.SearchType getParallelSearchType(int choice) {
-        switch (choice) {
-            case 1:
-                return ParallelLineSearch.SearchType.SIMPLE;
-            case 2:
-                return ParallelLineSearch.SearchType.CASE_INSENSITIVE;
-            case 3:
-                return ParallelLineSearch.SearchType.REGEX;
-            case 4:
-                return ParallelLineSearch.SearchType.WHOLE_WORD;
-            default:
-                return ParallelLineSearch.SearchType.SIMPLE;
-        }
+    private static boolean isValidFullName(String input) {
+        String[] parts = input.trim().split("\\s+");
+        return parts.length >= 2;
     }
 }

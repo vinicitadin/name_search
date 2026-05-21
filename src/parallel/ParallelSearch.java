@@ -21,6 +21,7 @@ public class ParallelSearch {
         this.numThreads = numThreads;
     }
 
+    // ===== MÉTODOS DE BUSCA DE TODAS AS OCORRÊNCIAS =====
 
     public List<Result> searchOneThreadPerFile(String searchTerm, ParallelLineSearch.SearchType type) {
         List<Result> allResults = new ArrayList<>();
@@ -131,8 +132,142 @@ public class ParallelSearch {
         return allResults;
     }
 
+    // ===== MÉTODOS DE BUSCA DA PRIMEIRA OCORRÊNCIA =====
+
+    public Result searchFirstOccurrenceOneThreadPerFile(String searchTerm) {
+        List<File> txtFiles = fileSearch.findAllTxtFilesRecursive();
+
+        if (txtFiles.isEmpty()) {
+            System.out.println("Nenhum arquivo .txt encontrado no diretório: " + directoryPath);
+            return null;
+        }
+
+        List<WorkerThreadFirstOccurrence> threads = new ArrayList<>();
+
+        for (File file : txtFiles) {
+            WorkerThreadFirstOccurrence thread = new WorkerThreadFirstOccurrence(file, searchTerm);
+            threads.add(thread);
+            thread.start();
+        }
+
+        Result firstResult = null;
+        for (WorkerThreadFirstOccurrence thread : threads) {
+            try {
+                thread.join();
+                if (thread.getResult() != null && firstResult == null) {
+                    firstResult = thread.getResult();
+                    // Interromper outras threads
+                    for (WorkerThreadFirstOccurrence t : threads) {
+                        if (t.isAlive()) {
+                            t.interrupt();
+                        }
+                    }
+                }
+            } catch (InterruptedException e) {
+                System.err.println("Erro ao aguardar thread");
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        return firstResult;
+    }
+
+    public Result searchFirstOccurrenceFixedThreadPool(String searchTerm) {
+        List<File> txtFiles = fileSearch.findAllTxtFilesRecursive();
+
+        if (txtFiles.isEmpty()) {
+            System.out.println("Nenhum arquivo .txt encontrado no diretório: " + directoryPath);
+            return null;
+        }
+
+        List<WorkerThreadFirstOccurrence> activeThreads = new ArrayList<>();
+        Result firstResult = null;
+
+        for (File file : txtFiles) {
+            if (firstResult != null) break;
+
+            while (activeThreads.size() >= numThreads) {
+                for (int i = activeThreads.size() - 1; i >= 0; i--) {
+                    WorkerThreadFirstOccurrence thread = activeThreads.get(i);
+                    if (!thread.isAlive()) {
+                        if (thread.getResult() != null && firstResult == null) {
+                            firstResult = thread.getResult();
+                        }
+                        activeThreads.remove(i);
+                    }
+                }
+                if (firstResult != null) break;
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+
+            if (firstResult == null) {
+                WorkerThreadFirstOccurrence thread = new WorkerThreadFirstOccurrence(file, searchTerm);
+                activeThreads.add(thread);
+                thread.start();
+            }
+        }
+
+        for (WorkerThreadFirstOccurrence thread : activeThreads) {
+            try {
+                thread.join();
+                if (thread.getResult() != null && firstResult == null) {
+                    firstResult = thread.getResult();
+                }
+            } catch (InterruptedException e) {
+                System.err.println("Erro ao aguardar thread");
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        return firstResult;
+    }
+
+    public Result searchFirstOccurrenceChunked(String searchTerm) {
+        List<File> txtFiles = fileSearch.findAllTxtFilesRecursive();
+
+        if (txtFiles.isEmpty()) {
+            System.out.println("Nenhum arquivo .txt encontrado no diretório: " + directoryPath);
+            return null;
+        }
+
+        List<List<File>> chunks = divideIntoChunks(txtFiles, numThreads);
+
+        List<ChunkWorkerThreadFirstOccurrence> threads = new ArrayList<>();
+
+        for (List<File> chunk : chunks) {
+            ChunkWorkerThreadFirstOccurrence thread = new ChunkWorkerThreadFirstOccurrence(chunk, searchTerm);
+            threads.add(thread);
+            thread.start();
+        }
+
+        Result firstResult = null;
+        for (ChunkWorkerThreadFirstOccurrence thread : threads) {
+            try {
+                thread.join();
+                if (thread.getResult() != null && firstResult == null) {
+                    firstResult = thread.getResult();
+                    // Interromper outras threads
+                    for (ChunkWorkerThreadFirstOccurrence t : threads) {
+                        if (t.isAlive()) {
+                            t.interrupt();
+                        }
+                    }
+                }
+            } catch (InterruptedException e) {
+                System.err.println("Erro ao aguardar thread");
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        return firstResult;
+    }
+
     public List<Result> search(String searchTerm) {
-        return searchOneThreadPerFile(searchTerm, ParallelLineSearch.SearchType.SIMPLE);
+        return searchOneThreadPerFile(searchTerm, ParallelLineSearch.SearchType.WHOLE_WORD);
     }
 
     private List<List<File>> divideIntoChunks(List<File> files, int numChunks) {
@@ -151,6 +286,8 @@ public class ParallelSearch {
         return chunks;
     }
 
+    // ===== INNER CLASSES =====
+
     private static class ChunkWorkerThread extends Thread {
         private List<File> files;
         private String searchTerm;
@@ -166,20 +303,11 @@ public class ParallelSearch {
 
         @Override
         public void run() {
-        	ParallelLineSearch lineSearch = new ParallelLineSearch();
+            ParallelLineSearch lineSearch = new ParallelLineSearch();
 
             for (File file : files) {
                 try {
                     switch (searchType) {
-                        case SIMPLE:
-                            results.addAll(lineSearch.searchSimple(file, searchTerm));
-                            break;
-                        case CASE_INSENSITIVE:
-                            results.addAll(lineSearch.searchCaseInsensitive(file, searchTerm));
-                            break;
-                        case REGEX:
-                            results.addAll(lineSearch.searchRegex(file, searchTerm));
-                            break;
                         case WHOLE_WORD:
                             results.addAll(lineSearch.searchWholeWord(file, searchTerm));
                             break;
@@ -192,6 +320,66 @@ public class ParallelSearch {
 
         public List<Result> getResults() {
             return results;
+        }
+    }
+
+    private static class WorkerThreadFirstOccurrence extends Thread {
+        private File file;
+        private String searchTerm;
+        private ParallelLineSearch lineSearch;
+        private Result result;
+
+        public WorkerThreadFirstOccurrence(File file, String searchTerm) {
+            this.file = file;
+            this.searchTerm = searchTerm;
+            this.lineSearch = new ParallelLineSearch();
+            this.result = null;
+        }
+
+        @Override
+        public void run() {
+            try {
+                result = lineSearch.searchWholeWordFirstOccurrence(file, searchTerm);
+            } catch (Exception e) {
+                System.err.println("Erro na thread para arquivo: " + file.getName());
+                e.printStackTrace();
+            }
+        }
+
+        public Result getResult() {
+            return result;
+        }
+    }
+
+    private static class ChunkWorkerThreadFirstOccurrence extends Thread {
+        private List<File> files;
+        private String searchTerm;
+        private ParallelLineSearch lineSearch;
+        private Result result;
+
+        public ChunkWorkerThreadFirstOccurrence(List<File> files, String searchTerm) {
+            this.files = new ArrayList<>(files);
+            this.searchTerm = searchTerm;
+            this.lineSearch = new ParallelLineSearch();
+            this.result = null;
+        }
+
+        @Override
+        public void run() {
+            try {
+                for (File file : files) {
+                    result = lineSearch.searchWholeWordFirstOccurrence(file, searchTerm);
+                    if (result != null) {
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Erro ao processar arquivo: " + files);
+            }
+        }
+
+        public Result getResult() {
+            return result;
         }
     }
 

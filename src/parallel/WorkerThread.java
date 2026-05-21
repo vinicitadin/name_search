@@ -24,15 +24,6 @@ public class WorkerThread extends Thread {
     public void run() {
         try {
             switch (searchType) {
-                case SIMPLE:
-                    results.addAll(lineSearch.searchSimple(file, searchTerm));
-                    break;
-                case CASE_INSENSITIVE:
-                    results.addAll(lineSearch.searchCaseInsensitive(file, searchTerm));
-                    break;
-                case REGEX:
-                    results.addAll(lineSearch.searchRegex(file, searchTerm));
-                    break;
                 case WHOLE_WORD:
                     results.addAll(lineSearch.searchWholeWord(file, searchTerm));
                     break;
