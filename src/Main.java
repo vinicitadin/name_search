@@ -14,12 +14,11 @@ public class Main {
         System.out.println("    Sequencial vs Paralelo");
         System.out.println("====================================================\n");
 
-        String directoryPath = "C:\\Users\\User\\Documents\\nameSearch\\name_search\\datasets";
+        String directoryPath = "C:\\Users\\vinic\\Downloads\\datasets";
         
         System.out.print("Digite o nome e sobrenome a buscar (separados por espaço): ");
         String searchTerm = scanner.nextLine().trim();
 
-        // Validar se contém nome e sobrenome
         if (!isValidFullName(searchTerm)) {
             System.out.println("Erro: Você deve fornecer um nome E um sobrenome (separados por espaço).");
             scanner.close();
@@ -70,15 +69,15 @@ public class Main {
         switch (strategyChoice) {
             case 1:
                 System.out.println("\nUsando estratégia: Uma thread por arquivo");
-                parallelResult = parallelSearch.searchFirstOccurrenceOneThreadPerFile(searchTerm);
+                parallelResult = parallelSearch.searchOneThreadPerFile(searchTerm);
                 break;
             case 2:
                 System.out.println("\nUsando estratégia: Pool fixo de threads");
-                parallelResult = parallelSearch.searchFirstOccurrenceFixedThreadPool(searchTerm);
+                parallelResult = parallelSearch.searchFixedThreadPool(searchTerm);
                 break;
             case 3:
                 System.out.println("\nUsando estratégia: Threads com chunks");
-                parallelResult = parallelSearch.searchFirstOccurrenceChunked(searchTerm);
+                parallelResult = parallelSearch.searchChunked(searchTerm);
                 break;
             default:
                 System.out.println("Opção inválida!");
@@ -97,7 +96,6 @@ public class Main {
 
         System.out.println("\nTempo de execução: " + parallelTimer);
 
-        // Comparação de performance
         if (sequentialResult != null && parallelResult != null) {
         	double sequentialTime = sequentialTimer.getElapsedTime();
         	double parallelTime = parallelTimer.getElapsedTime();

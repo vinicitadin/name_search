@@ -2,7 +2,6 @@ package sequential;
 
 import model.Result;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -33,25 +32,5 @@ public class SequentialSearch {
         }
 
         return null;
-    }
-
-    public List<Result> search(String searchTerm) {
-        List<Result> allResults = new ArrayList<>();
-
-        List<File> txtFiles = fileSearch.findAllTxtFilesRecursive();
-
-        if (txtFiles.isEmpty()) {
-            System.out.println("Nenhum arquivo .txt encontrado no diretório: " + directoryPath);
-            return allResults;
-        }
-
-        for (File file : txtFiles) {
-            List<Result> fileResults = lineSearch.searchWholeWord(file, searchTerm);
-            if (fileResults != null) {
-                allResults.addAll(fileResults);
-            }
-        }
-
-        return allResults;
     }
 }

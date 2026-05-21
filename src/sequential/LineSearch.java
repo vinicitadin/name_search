@@ -5,8 +5,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class LineSearch {
 
@@ -32,26 +30,5 @@ public class LineSearch {
         }
 
         return null;
-    }
-
-    public List<Result> searchWholeWord(File file, String searchTerm) {
-        List<Result> results = new ArrayList<>();
-        String pattern = "\\b" + searchTerm + "\\b";
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            int lineNumber = 1;
-
-            while ((line = reader.readLine()) != null) {
-                if (line.matches(".*" + pattern + ".*")) {
-                    results.add(new Result(file.getName(), lineNumber, line));
-                }
-                lineNumber++;
-            }
-        } catch (IOException e) {
-            System.err.println("Erro ao ler arquivo: " + file.getName());
-        }
-
-        return results;
     }
 }
