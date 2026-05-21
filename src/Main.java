@@ -14,7 +14,8 @@ public class Main {
         System.out.println("    Sequencial vs Paralelo");
         System.out.println("====================================================\n");
 
-        String directoryPath = "C:\\Users\\vinic\\Downloads\\datasets";
+        System.out.print("Digite o diretório do dataset: ");
+        String directoryPath = scanner.nextLine().trim();
         
         System.out.print("Digite o nome e sobrenome a buscar (separados por espaço): ");
         String searchTerm = scanner.nextLine().trim();
