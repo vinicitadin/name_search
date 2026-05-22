@@ -60,6 +60,21 @@ name_search/
 
 ---
 
+## Como executar
+
+A forma mais simples de rodar este programa é utilizando o arquivo `.jar` disponível nos [Releases do GitHub](https://github.com/vinicitadin/name_search/releases):
+
+1. Acesse a página de [Releases](https://github.com/vinicitadin/name_search/releases).
+2. Baixe o arquivo `NameSearch.jar` mais recente na seção _Assets_.
+3. Certifique-se de ter o [Java](https://www.java.com/) instalado (Java 8 ou superior).
+4. Execute o comando abaixo no terminal, substituindo o caminho para onde você salvou o arquivo:
+
+```bash
+java -jar caminho/para/NameSearch.jar
+```
+
+---
+
 ## Observações
 
 - O projeto foi planejado para não misturar responsabilidades e facilitar comparações claras entre as abordagens sequencial e paralela.
